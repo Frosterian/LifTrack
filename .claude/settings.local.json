@@ -6,7 +6,8 @@
       "Bash(npx prisma:*)",
       "Bash(npm run:*)",
       "Bash(rm .env)",
-      "Bash(cp .env.local .env)"
+      "Bash(cp .env.local .env)",
+      "Bash(npx next:*)"
     ]
   }
 }
