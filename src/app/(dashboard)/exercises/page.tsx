@@ -2,6 +2,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma/client";
 import { ExerciseCard } from "@/components/exercises/ExerciseCard";
 import { ExerciseFilters } from "@/components/exercises/ExerciseFilters";
+import { MuscleMapFilter } from "@/components/exercises/MuscleMapFilter";
 import type { Prisma, MuscleGroup, Equipment, Level } from "@prisma/client";
 
 const PAGE_SIZE = 36;
@@ -63,6 +64,10 @@ export default async function ExercisesPage({
       <div className="mb-6 flex items-baseline justify-between">
         <h1 className="text-3xl font-bold">Bibliothèque</h1>
         <p className="font-mono text-sm text-text-muted">{total} exercices</p>
+      </div>
+
+      <div className="mb-6">
+        <MuscleMapFilter />
       </div>
 
       <div className="grid gap-6 md:grid-cols-[260px_1fr]">
