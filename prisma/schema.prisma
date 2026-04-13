@@ -1,0 +1,277 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ============================================
+// UTILISATEURS
+// ============================================
+
+model User {
+  id                 String    @id @default(uuid())
+  email              String    @unique
+  firstName          String?
+  lastName           String?
+  username           String?   @unique
+  avatarUrl          String?
+  role               Role      @default(USER)
+  aiEnabled          Boolean   @default(false)
+  bodyWeight         Float?
+  height             Float?
+  birthDate          DateTime?
+  defaultRestSeconds Int       @default(90)
+  weeklyGoal         Int       @default(3)
+  supabaseId         String    @unique
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  programs        Program[]
+  workouts        Workout[]
+  aiChats         AiChat[]
+  bodyMetrics     BodyMetric[]
+  customExercises Exercise[]   @relation("CreatedExercises")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+// ============================================
+// EXERCICES
+// ============================================
+
+model Exercise {
+  id           String    @id @default(uuid())
+  name         String
+  nameEn       String?
+  slug         String    @unique
+  description  String?
+  equipment    Equipment
+  difficulty   Level?
+  instructions String?
+  tips         String?
+  imageUrl     String?
+  videoUrl     String?
+  externalId   String?
+  source       String?
+  isGlobal     Boolean   @default(false)
+  isCustom     Boolean   @default(false)
+  createdById  String?
+  createdAt    DateTime  @default(now())
+
+  createdBy        User?             @relation("CreatedExercises", fields: [createdById], references: [id])
+  muscles          ExerciseMuscle[]
+  programExercises ProgramExercise[]
+  workoutSets      WorkoutSet[]
+
+  @@index([slug])
+  @@index([equipment])
+}
+
+model ExerciseMuscle {
+  id         String      @id @default(uuid())
+  exerciseId String
+  muscle     MuscleGroup
+  isPrimary  Boolean     @default(false)
+
+  exercise Exercise @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+
+  @@unique([exerciseId, muscle])
+  @@index([muscle])
+}
+
+enum MuscleGroup {
+  CHEST
+  BACK
+  SHOULDERS
+  BICEPS
+  TRICEPS
+  FOREARMS
+  QUADRICEPS
+  HAMSTRINGS
+  GLUTES
+  CALVES
+  ABS
+  TRAPS
+  LATS
+  FULL_BODY
+  CARDIO
+}
+
+enum Equipment {
+  BARBELL
+  DUMBBELL
+  MACHINE
+  CABLE
+  BODYWEIGHT
+  KETTLEBELL
+  BAND
+  OTHER
+}
+
+// ============================================
+// PROGRAMMES
+// ============================================
+
+model Program {
+  id            String      @id @default(uuid())
+  name          String
+  description   String?
+  type          ProgramType
+  durationWeeks Int?
+  daysPerWeek   Int?
+  level         Level?
+  isTemplate    Boolean     @default(false)
+  aiGenerated   Boolean     @default(false)
+  isActive      Boolean     @default(false)
+  userId        String?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  user     User?        @relation(fields: [userId], references: [id])
+  days     ProgramDay[]
+  workouts Workout[]
+
+  @@index([userId, isActive])
+}
+
+enum ProgramType {
+  PPL
+  UPPER_LOWER
+  FULL_BODY
+  BRO_SPLIT
+  CUSTOM
+}
+
+enum Level {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+model ProgramDay {
+  id        String @id @default(uuid())
+  programId String
+  name      String
+  dayOfWeek Int?
+  order     Int
+
+  program   Program           @relation(fields: [programId], references: [id], onDelete: Cascade)
+  exercises ProgramExercise[]
+}
+
+model ProgramExercise {
+  id           String  @id @default(uuid())
+  programDayId String
+  exerciseId   String
+  order        Int
+  targetSets   Int
+  targetReps   String
+  targetWeight Float?
+  restSeconds  Int?
+  notes        String?
+
+  programDay ProgramDay @relation(fields: [programDayId], references: [id], onDelete: Cascade)
+  exercise   Exercise   @relation(fields: [exerciseId], references: [id])
+}
+
+// ============================================
+// SÉANCES
+// ============================================
+
+model Workout {
+  id             String    @id @default(uuid())
+  userId         String
+  programId      String?
+  programDayId   String?
+  name           String
+  date           DateTime  @default(now())
+  startedAt      DateTime?
+  finishedAt     DateTime?
+  duration       Int?
+  totalVolume    Float?
+  totalSets      Int?
+  totalReps      Int?
+  caloriesBurned Float?
+  caloriesManual Boolean   @default(false)
+  notes          String?
+  rating         Int?
+  completed      Boolean   @default(false)
+  deletedAt      DateTime?
+  createdAt      DateTime  @default(now())
+
+  user    User         @relation(fields: [userId], references: [id])
+  program Program?     @relation(fields: [programId], references: [id])
+  sets    WorkoutSet[]
+
+  @@index([userId, date])
+  @@index([userId, deletedAt])
+}
+
+model WorkoutSet {
+  id          String    @id @default(uuid())
+  workoutId   String
+  exerciseId  String
+  setNumber   Int
+  reps        Int?
+  weight      Float?
+  restSeconds Int?
+  completed   Boolean   @default(false)
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+
+  workout  Workout  @relation(fields: [workoutId], references: [id], onDelete: Cascade)
+  exercise Exercise @relation(fields: [exerciseId], references: [id])
+
+  @@index([workoutId])
+  @@index([exerciseId, completedAt])
+}
+
+// ============================================
+// IA
+// ============================================
+
+model AiChat {
+  id        String   @id @default(uuid())
+  userId    String
+  title     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user     User        @relation(fields: [userId], references: [id])
+  messages AiMessage[]
+
+  @@index([userId])
+}
+
+model AiMessage {
+  id        String   @id @default(uuid())
+  chatId    String
+  role      String
+  content   String
+  createdAt DateTime @default(now())
+
+  chat AiChat @relation(fields: [chatId], references: [id], onDelete: Cascade)
+}
+
+// ============================================
+// MÉTRIQUES CORPORELLES
+// ============================================
+
+model BodyMetric {
+  id     String   @id @default(uuid())
+  userId String
+  date   DateTime @default(now())
+  weight Float?
+  notes  String?
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId, date])
+}

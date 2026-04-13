@@ -1,0 +1,47 @@
+@import "tailwindcss";
+@plugin "tailwindcss-animate";
+
+@theme {
+  --color-background: #0A0A0F;
+  --color-background-card: #12121A;
+  --color-background-hover: #1A1A2E;
+
+  --color-accent-primary: #00F5A0;
+  --color-accent-secondary: #00D9FF;
+
+  --color-text: #F0F0F5;
+  --color-text-muted: #8888AA;
+
+  --color-danger: #FF4757;
+  --color-success: #2ED573;
+  --color-warning: #FFA502;
+
+  --font-sans: "Inter", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+
+  --radius-card: 12px;
+  --radius-button: 8px;
+}
+
+html, body {
+  background: var(--color-background);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+.font-mono {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.gradient-accent {
+  background-image: linear-gradient(135deg, #00F5A0, #00D9FF);
+}
+
+.gradient-text {
+  background-image: linear-gradient(135deg, #00F5A0, #00D9FF);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
