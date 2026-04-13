@@ -3,15 +3,22 @@ import type { User as SupabaseUser } from "@supabase/supabase-js";
 import type { User as PrismaUser } from "@prisma/client";
 
 export async function syncUser(supabaseUser: SupabaseUser): Promise<PrismaUser> {
-  const existing = await prisma.user.findUnique({
-    where: { supabaseId: supabaseUser.id },
-  });
-
-  if (existing) return existing;
-
   const email = supabaseUser.email!;
   const meta = supabaseUser.user_metadata ?? {};
-  const isAdmin = process.env.ADMIN_EMAIL && email === process.env.ADMIN_EMAIL;
+  const isAdmin = !!process.env.ADMIN_EMAIL && email === process.env.ADMIN_EMAIL;
+
+  const bySupabaseId = await prisma.user.findUnique({
+    where: { supabaseId: supabaseUser.id },
+  });
+  if (bySupabaseId) return bySupabaseId;
+
+  const byEmail = await prisma.user.findUnique({ where: { email } });
+  if (byEmail) {
+    return prisma.user.update({
+      where: { id: byEmail.id },
+      data: { supabaseId: supabaseUser.id },
+    });
+  }
 
   return prisma.user.create({
     data: {
